@@ -1,6 +1,7 @@
 """
 Provides linkedin api-related code
 """
+
 import base64
 import json
 import logging
@@ -91,6 +92,14 @@ class Linkedin(object):
 
         url = f"{self.client.API_BASE_URL if not base_request else self.client.LINKEDIN_BASE_URL}{uri}"
         return self.client.session.get(url, **kwargs)
+
+    def _cookies(self):
+        """Return client cookies"""
+        return self.client.cookies
+
+    def _headers(self):
+        """Return client cookies"""
+        return self.client.REQUEST_HEADERS
 
     def _post(self, uri, evade=default_evade, base_request=False, **kwargs):
         """POST request to Linkedin API"""
@@ -289,7 +298,6 @@ class Linkedin(object):
                 break
 
             self.logger.debug(f"results grew to {len(results)}")
-            self.logger.debug(f"results {results}")
 
         return results
 
@@ -357,6 +365,8 @@ class Linkedin(object):
         :type keyword_school: str, optional
         :param connection_of: Connection of LinkedIn user, given by profile URN ID
         :type connection_of: str, optional
+        :param limit: Maximum length of the returned list, defaults to -1 (no limit)
+        :type limit: int, optional
 
         :return: List of profiles (minimal data only)
         :rtype: list
@@ -464,12 +474,19 @@ class Linkedin(object):
         for item in data:
             if "company" not in item.get("trackingUrn"):
                 continue
+            #if get_id_from_urn(item.get("trackingUrn", None)) == 3843:
+            #print(item)
+
             results.append(
                 {
                     "urn_id": get_id_from_urn(item.get("trackingUrn", None)),
                     "name": (item.get("title") or {}).get("text", None),
                     "headline": (item.get("primarySubtitle") or {}).get("text", None),
                     "subline": (item.get("secondarySubtitle") or {}).get("text", None),
+                    #точное число отслеживающих
+                    #число сотрудников
+                    #сфера
+                    #Url
                 }
             )
 
@@ -524,30 +541,30 @@ class Linkedin(object):
         if limit is None:
             limit = -1
 
-        query = {"origin":"JOB_SEARCH_PAGE_QUERY_EXPANSION"}
+        query = {"origin": "JOB_SEARCH_PAGE_QUERY_EXPANSION"}
         if keywords:
             query["keywords"] = "KEYWORD_PLACEHOLDER"
         if location_name:
             query["locationFallback"] = "LOCATION_PLACEHOLDER"
 
         # In selectedFilters()
-        query['selectedFilters'] = {}
+        query["selectedFilters"] = {}
         if companies:
-            query['selectedFilters']['company'] = f"List({','.join(companies)})"
+            query["selectedFilters"]["company"] = f"List({','.join(companies)})"
         if experience:
-            query['selectedFilters']['experience'] = f"List({','.join(experience)})"
+            query["selectedFilters"]["experience"] = f"List({','.join(experience)})"
         if job_type:
-            query['selectedFilters']['jobType'] = f"List({','.join(job_type)})"
+            query["selectedFilters"]["jobType"] = f"List({','.join(job_type)})"
         if job_title:
-            query['selectedFilters']['title'] = f"List({','.join(job_title)})"
+            query["selectedFilters"]["title"] = f"List({','.join(job_title)})"
         if industries:
-            query['selectedFilters']['industry'] = f"List({','.join(industries)})"
+            query["selectedFilters"]["industry"] = f"List({','.join(industries)})"
         if distance:
-            query['selectedFilters']['distance'] = f"List({distance})"
+            query["selectedFilters"]["distance"] = f"List({distance})"
         if remote:
-            query['selectedFilters']['workplaceType'] = f"List({','.join(remote)})"
+            query["selectedFilters"]["workplaceType"] = f"List({','.join(remote)})"
 
-        query['selectedFilters']['timePostedRange'] = f"List(r{listed_at})"
+        query["selectedFilters"]["timePostedRange"] = f"List(r{listed_at})"
         query["spellCorrectionEnabled"] = "true"
 
         # Query structure:
@@ -565,12 +582,15 @@ class Linkedin(object):
         #    spellCorrectionEnabled:true
         #  )"
 
-        query = str(query).replace(" ","") \
-                    .replace("'","") \
-                    .replace("KEYWORD_PLACEHOLDER", keywords or "") \
-                    .replace("LOCATION_PLACEHOLDER", location_name or "") \
-                    .replace("{","(") \
-                    .replace("}",")")
+        query = (
+            str(query)
+            .replace(" ", "")
+            .replace("'", "")
+            .replace("KEYWORD_PLACEHOLDER", keywords or "")
+            .replace("LOCATION_PLACEHOLDER", location_name or "")
+            .replace("{", "(")
+            .replace("}", ")")
+        )
         results = []
         while True:
             # when we're close to the limit, only fetch what we need to
@@ -594,7 +614,7 @@ class Linkedin(object):
             new_data = [
                 i
                 for i in elements
-                if i["$type"] == 'com.linkedin.voyager.dash.jobs.JobPosting'
+                if i["$type"] == "com.linkedin.voyager.dash.jobs.JobPosting"
             ]
             # break the loop if we're done searching or no results returned
             if not new_data:
@@ -790,9 +810,13 @@ class Linkedin(object):
         for item in projects:
             del item["entityUrn"]
         profile["projects"] = projects
+        # massage [skills] data
+        skills = data["skillView"]["elements"]
+        for item in skills:
+            del item["entityUrn"]
+        profile["skills"] = skills
 
-        # massage urn_id
-        profile['urn_id'] = profile['entityUrn'].replace('urn:li:fs_profile:', '')
+        profile["urn_id"] = profile["entityUrn"].replace("urn:li:fs_profile:", "")
 
         return profile
 
@@ -970,7 +994,7 @@ class Linkedin(object):
         data = res.json()
 
         if data and "status" in data and data["status"] != 200:
-            self.logger.info("request failed: {}".format(data["message"]))
+            self.logger.info("request failed: {}".format(data.get("message")))
             return {}
 
         company = data["elements"][0]
@@ -1172,7 +1196,7 @@ class Linkedin(object):
         )
 
         res = self._post(
-            f"{self.client.API_BASE_URL}/relationships/invitations/{invitation_id}",
+            f"/relationships/invitations/{invitation_id}",
             params=params,
             data=payload,
         )

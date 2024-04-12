@@ -10,7 +10,7 @@ cookies/
 
 .pytest_cache
 **__pycache__/
-credentials.json
+credentials*.json
 
 # PyPI
 dist

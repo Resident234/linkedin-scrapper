@@ -14,11 +14,11 @@ if __name__ == "__main__":
     if credentials:
         limit = 1000
         offset = 0
-        linkedin = Linkedin(credentials["username"], credentials["password"], debug=False)
+        linkedin = Linkedin(credentials["username"], credentials["password"])
 
         while True:
-            peoples = linkedin.search_people(keywords='php', offset=offset)#TODO: вскопать внутренности и разобраться как ускорить
+            peoples = linkedin.search_people(current_company='Google', offset=offset)#TODO: вскопать внутренности и разобраться как ускорить
             if not len(peoples) or offset >= limit:
                 break
-            print(len(peoples), peoples)
+            print(offset, len(peoples), peoples)
             offset += len(peoples)
