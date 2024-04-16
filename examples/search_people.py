@@ -1,10 +1,12 @@
 import json
+import time
 
-from conf import DEFAULT_PROFILE_PUBLIC_ID, START_PROFILE_PUBLIC_IDS
 from linkedin_api import Linkedin
+from utils.helpers import cookies_get_value, cookies_set_value
 
 """
-Поиск всех пользоваталей в Linkedin
+Поиск всех пользователей в Linkedin
+todo троттлинг для поисковых выборок
 """
 
 if __name__ == "__main__":
@@ -12,13 +14,22 @@ if __name__ == "__main__":
         credentials = json.load(f)
 
     if credentials:
-        limit = 1000
-        offset = 0
         linkedin = Linkedin(credentials["username"], credentials["password"])
+        limit = 5000
+        step = 10
+        repeat_count = 0
+        cookies_subdir = 'search_people'
+
+        offset = cookies_get_value('current_progress', cookies_subdir)
 
         while True:
-            peoples = linkedin.search_people(current_company='Google', offset=offset)#TODO: вскопать внутренности и разобраться как ускорить
+            peoples = linkedin.search_people(offset=offset, limit=step)
             if not len(peoples) or offset >= limit:
-                break
-            print(offset, len(peoples), peoples)
+                print(f'sleep for {20} sec')
+                time.sleep(20)
+                if repeat_count >= 10:
+                    break
+            print(offset, peoples)  # , len(peoples)
+            cookies_set_value("current_progress", offset, cookies_subdir)
             offset += len(peoples)
+            repeat_count = 0
