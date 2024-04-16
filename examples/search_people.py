@@ -87,27 +87,9 @@ if __name__ == "__main__":
         linkedin.logger.disabled = True
         cookies_subdir = 'search_people'
 
-        profile = get_profile('alina-pimenova')
-        print(profile)
-
         charset = 'abcdefghijklmnopqrstuvwxyz'
-        maxlength = 3
+        maxlength = 10
         for candidate in chain.from_iterable(product(charset, repeat=i) for i in range(1, maxlength + 1)):
             profile = get_profile(''.join(candidate))
             if profile:
                 print(profile)
-
-        offset = cookies_get_value('current_progress', cookies_subdir)
-
-        while False:
-            peoples = linkedin.search_people(offset=offset, limit=step)
-            if not len(peoples) or offset >= limit:
-                print(f'sleep for {20} sec')
-                time.sleep(20)
-                repeat_count += 1
-                if repeat_count >= 10:
-                    break
-            print(offset, peoples)
-            cookies_set_value("current_progress", offset, cookies_subdir)
-            offset += len(peoples)
-            repeat_count = 0
