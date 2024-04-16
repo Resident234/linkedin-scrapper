@@ -36,6 +36,16 @@ def get_profile(urn):
         for skill in profile['skills']:
             skills.append(skill['name'])
 
+        experience = []
+        for item in profile['experience']:
+            experience.append({
+                'location_name': item.get('locationName'),
+                'company_name': item['companyName'],
+                'description': item.get('description'),
+                'company_industries': item['industries'] if item.get('industries') else [],
+                'title': item['title'],
+                'company_urn': get_id_from_urn(item['companyUrn']) if item.get('companyUrn') else '',
+            })
         data_to_db = {
             'summary': profile['summary'],
             'industry_name': profile['industryName'],
@@ -51,13 +61,13 @@ def get_profile(urn):
             'country_code': profile['location']['basicLocation']['countryCode'],
             'headline': profile['headline'],
             'display_picture_url': profile['displayPictureUrl'],
-            'img_100_100': profile['img_100_100'],
-            'img_200_200': profile['img_200_200'],
-            'img_400_400': profile['img_400_400'],
-            'img_800_800': profile['img_800_800'],
+            'img_100_100': profile.get('img_100_100'),
+            'img_200_200': profile.get('img_200_200'),
+            'img_400_400': profile.get('img_400_400'),
+            'img_800_800': profile.get('img_800_800'),
             'certifications': certifications,
             'projects': [],#todo
-            'experience': [],#todo
+            'experience': experience,
             'skills': skills,
         }
         return data_to_db
@@ -77,7 +87,8 @@ if __name__ == "__main__":
         linkedin.logger.disabled = True
         cookies_subdir = 'search_people'
 
-        profile = get_profile('julia-malysh')
+        profile = get_profile('alina-pimenova')
+        print(profile)
 
         charset = 'abcdefghijklmnopqrstuvwxyz'
         maxlength = 3
