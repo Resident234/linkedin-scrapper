@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
         charset = 'abcdefghijklmnopqrstuvwxyz'
         maxlength = 10
-        for candidate in chain.from_iterable(product(charset, repeat=i) for i in range(1, maxlength + 1)):
+        for candidate in chain.from_iterable(product(charset, repeat=i) for i in range(1, maxlength + 1)):#todo результат генерации в бд и по ней уже проходить с сохранением прогресса
             profile = get_profile(''.join(candidate))
             if profile:
                 print(profile)

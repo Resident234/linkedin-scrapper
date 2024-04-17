@@ -13,6 +13,7 @@ sphinx-rtd-theme = "*"
 requests = "*"
 beautifulsoup4 = "*"
 lxml = "*"
+linkedin = "*"
 
 [requires]
 python_version = "3.7"
